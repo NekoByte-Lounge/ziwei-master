@@ -20,7 +20,7 @@
 
 ```bash
 # 克隆
-git clone https://github.com/<your-username>/ziwei-master.git
+git clone https://github.com/leung95/ziwei-master.git
 cd ziwei-master
 
 # 安装依赖（只需在仓库内运行一次）
