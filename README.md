@@ -23,23 +23,30 @@
 git clone https://github.com/<your-username>/ziwei-master.git
 cd ziwei-master
 
-# 安装依赖
+# 安装依赖（只需在仓库内运行一次）
 npm install
 
+# 安装并在系统中注册 "ziwei" 命令（macOS / Linux）
+./scripts/install.sh
+
+# 或在 Windows PowerShell 中运行：
+.\scripts\install.ps1
+
+# 安装完成后，你可以在任意终端直接使用：
 # 本命排盘
-npx tsx cli/ziwei.ts chart 1990 1 1 12 male
+ziwei chart 1990 1 1 12 male
 
 # 流月推算 (2026年7月)
-npx tsx cli/ziwei.ts monthly 1990 1 1 12 2026 7
+ziwei monthly 1990 1 1 12 2026 7
 
 # 流日推算 (2026年7月15日)
-npx tsx cli/ziwei.ts daily 1990 1 1 12 2026 7 15
+ziwei daily 1990 1 1 12 2026 7 15
 
 # 当前所有运限
-npx tsx cli/ziwei.ts now 1990 1 1 12
+ziwei now 1990 1 1 12
 
 # 星曜知识
-npx tsx cli/ziwei.ts star 紫微
+ziwei star 紫微
 ```
 
 ### 通过 Python
@@ -48,6 +55,8 @@ npx tsx cli/ziwei.ts star 紫微
 python py/ziwei.py chart 1990 1 1 12 male
 python py/ziwei.py monthly 1990 1 1 12 2026 7
 ```
+
+说明：新安装脚本会通过 npm link 将本仓库的命令注册到全局 PATH。运行 ziwei 时，程序会优先尝试使用系统中已安装的 tsx；若未发现，会回退使用 npx tsx 作为一次性执行的后备方式。
 
 ## 参数说明
 
