@@ -5,11 +5,15 @@
  * 功能: 本命排盘 + 流月/流日/流时/流年推算
  * 基于 iztro 开源库 (https://github.com/SylarLong/iztro)
  *
+ * 说明: 推荐先在仓库根运行安装脚本注册全局命令，然后直接使用 `ziwei`。
+ *   ./scripts/install.sh        # macOS / Linux
+ *   .\scripts\install.ps1      # Windows PowerShell
+ *
  * 用法:
- *   npx tsx cli/ziwei.ts chart 1995 10 14 18 male
- *   npx tsx cli/ziwei.ts monthly 1995 10 14 18 2026 7
- *   npx tsx cli/ziwei.ts daily 1995 10 14 18 2026 7 15
- *   npx tsx cli/ziwei.ts now 1995 10 14 18
+ *   ziwei chart 1995 10 14 18 male
+ *   ziwei monthly 1995 10 14 18 2026 7
+ *   ziwei daily 1995 10 14 18 2026 7 15
+ *   ziwei now 1995 10 14 18
  */
 
 import { astro } from 'iztro';
@@ -144,24 +148,25 @@ function showHelp(): void {
     ' ╚══════════════════════════════════════╝',
     '',
     ' 【本命排盘】',
-    '   npx tsx cli/ziwei.ts chart <年> <月> <日> <时> <male|female>',
-    '   例: npx tsx cli/ziwei.ts chart 1995 10 14 18 male',
+    '   ziwei chart <年> <月> <日> <时> <male|female>',
+    '   例: ziwei chart 1995 10 14 18 male',
     '',
     ' 【流运推算】（基于 iztro horoscope API）',
-    '   npx tsx cli/ziwei.ts now     <生年> <月> <日> <时>',
-    '   npx tsx cli/ziwei.ts yearly  <生年> <月> <日> <时> <目标年>',
-    '   npx tsx cli/ziwei.ts monthly <生年> <月> <日> <时> <目标年> <月>',
-    '   npx tsx cli/ziwei.ts daily   <生年> <月> <日> <时> <目标年> <月> <日>',
-    '   npx tsx cli/ziwei.ts hourly  <生年> <月> <日> <时> <目标年> <月> <日> <目标时>',
-    '   例: npx tsx cli/ziwei.ts monthly 1995 10 14 18 2026 7',
+    '   ziwei now     <生年> <月> <日> <时>',
+    '   ziwei yearly  <生年> <月> <日> <时> <目标年>',
+    '   ziwei monthly <生年> <月> <日> <时> <目标年> <月>',
+    '   ziwei daily   <生年> <月> <日> <时> <目标年> <月> <日>',
+    '   ziwei hourly  <生年> <月> <日> <时> <目标年> <月> <日> <目标时>',
+    '   例: ziwei monthly 1995 10 14 18 2026 7',
     '',
     ' 【知识查询】',
-    '   npx tsx cli/ziwei.ts star    <星名>',
-    '   npx tsx cli/ziwei.ts palace  <宫名>',
-    '   npx tsx cli/ziwei.ts shichen',
+    '   ziwei star    <星名>',
+    '   ziwei palace  <宫名>',
+    '   ziwei shichen',
     '',
     ' 【Python 包装】',
     '   python py/ziwei.py <命令> [参数...]',
+    '   或（若已运行安装脚本）直接使用 ziwei <命令>',
     '',
   ].join('\n'));
 }

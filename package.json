@@ -9,6 +9,9 @@
   "homepage": "https://github.com/<your-username>/ziwei-master",
   "license": "MIT",
   "type": "module",
+  "bin": {
+    "ziwei": "bin/ziwei.cjs"
+  },
   "scripts": {
     "chart": "npx tsx cli/ziwei.ts chart",
     "monthly": "npx tsx cli/ziwei.ts monthly",
@@ -20,15 +23,17 @@
     "help": "npx tsx cli/ziwei.ts help"
   },
   "dependencies": {
-    "iztro": "^2.5.8"
+    "iztro": "^2.5.8",
+    "tsx": "^4.0.0"
   },
   "devDependencies": {
-    "tsx": "^4.0.0",
     "typescript": "^5.0.0"
   },
   "files": [
     "cli/",
     "py/",
+    "bin/",
+    "scripts/",
     "README.md",
     "LICENSE"
   ]
