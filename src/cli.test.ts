@@ -48,3 +48,16 @@ test('非法性别返回非零并提示', () => {
   assert.notEqual(res.status, 0);
   assert.match(res.stderr, /无效性别/);
 });
+
+test('bin wrapper 对错误参数只执行一次并返回非零', () => {
+  const res = spawnSync(
+    process.execPath,
+    [path.join(root, 'bin', 'ziwei.cjs'), 'chart', '2020', '2', '30', '12', 'male'],
+    { encoding: 'utf8', timeout: 30000 },
+  );
+  assert.notEqual(res.status, 0);
+  const hits = (res.stderr.match(/出生日期无效/g) || []).length;
+  assert.equal(hits, 1);
+  assert.match(res.stderr, /用法：ziwei chart/);
+});
+
