@@ -23,14 +23,14 @@
 git clone https://github.com/leung95/ziwei-master.git
 cd ziwei-master
 
-# 安装依赖（只需在仓库内运行一次）
-npm install
-
-# 安装并在系统中注册 "ziwei" 命令（macOS / Linux）
+# 安装并注册全局 "ziwei" 命令（macOS / Linux）
 ./scripts/install.sh
 
-# 或在 Windows PowerShell 中运行：
-.\scripts\install.ps1
+# 或在 Windows 中运行（推荐）：
+scripts\install.cmd
+
+# 也可以在 Windows PowerShell 中显式运行：
+powershell -ExecutionPolicy Bypass -File .\scripts\install.ps1
 
 # 安装完成后，你可以在任意终端直接使用：
 # 本命排盘
@@ -56,7 +56,7 @@ python py/ziwei.py chart 1990 1 1 12 male
 python py/ziwei.py monthly 1990 1 1 12 female 2026 7
 ```
 
-说明：新安装脚本会通过 npm link 将本仓库的命令注册到全局 PATH。运行 ziwei 时，程序会优先尝试使用系统中已安装的 tsx；若未发现，会回退使用 npx tsx 作为一次性执行的后备方式。
+说明：安装脚本会先安装依赖（有 package-lock 时用 npm ci），再通过 npm link 把 `ziwei` 注册到全局 PATH。运行时程序会优先使用系统已安装的 tsx；若未发现，则回退使用 npx tsx。
 
 ## 参数说明
 
@@ -119,6 +119,23 @@ JSON 中包含出生信息与对应的 `iztro` 结构化数据（命盘或流运
     兄弟宫    → 官禄
     ...
     田宅宫    → 命宫     ◀ 流限在此
+```
+
+## 开发与测试
+
+```bash
+npm run typecheck   # TypeScript 类型检查
+npm test            # 单元测试
+npm run chart -- 1990 1 1 12 male   # 直接跑 chart 命令
+```
+
+项目结构：
+
+```
+cli/ziwei.ts       # 入口，保持原有命令行用法
+src/               # 核心逻辑：参数解析、格式化、知识库
+scripts/install.sh # macOS / Linux 安装
+scripts/install.ps1 / install.cmd  # Windows 安装
 ```
 
 ## 技术栈

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""
+r"""
 ziwei-master — Python 包装器
 
 说明：推荐在仓库根运行安装脚本注册全局命令 `ziwei`，然后直接使用 `ziwei`。
