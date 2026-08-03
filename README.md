@@ -79,6 +79,18 @@ now     <生年> <月> <日> <时> [male|female]
 - 性别：可填 `male` / `female`（或 `男` / `女`），缺省按男性。性别影响大限/小限计算，推荐显式传入
 - 参数校验：出生/流运的非法日期、非法时辰（非 0-23）会给出明确报错和用法提示
 
+## 机器可读输出（--json）
+
+`chart / now / yearly / monthly / daily / hourly` 支持 `--json`，输出结构化 JSON，便于脚本或程序集成：
+
+```bash
+ziwei chart 1990 1 1 12 female --json
+ziwei monthly 1990 1 1 12 female 2026 7 --json
+ziwei now 1990 1 1 12 --json
+```
+
+JSON 中包含出生信息与对应的 `iztro` 结构化数据（命盘或流运对象）。
+
 ## 输出示例
 
 ```

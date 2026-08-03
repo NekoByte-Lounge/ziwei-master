@@ -114,6 +114,15 @@ function expectNum(rest: string[], idx: number, name: string, usage: string): nu
   return v;
 }
 
+type Flags = { json: boolean; detailed: boolean; rest: string[] };
+
+function extractFlags(args: string[]): Flags {
+  const json = args.includes('--json');
+  const detailed = args.includes('--detailed');
+  const rest = args.filter(x => !x.startsWith('--'));
+  return { json, detailed, rest };
+}
+
 // ── Chart formatting ──
 function fmtChart(al: any): string[] {
   const L: string[] = [];
@@ -222,6 +231,8 @@ function showHelp(): void {
     '   ziwei hourly  <生年> <月> <日> <时> <目标年> <月> <日> <目标时> [male|female]',
     '   例: ziwei monthly 1995 10 14 18 female 2026 7',
     '',
+    ' 【通用选项】',
+    '   --json  输出 JSON（支持 chart/now/yearly/monthly/daily/hourly）',
     ' 【知识查询】',
     '   ziwei star    <星名>',
     '   ziwei palace  <宫名>',
@@ -267,7 +278,8 @@ async function main(): Promise<void> {
   }
 
   // Commands requiring birth info
-  const { gender, rest } = extractGender(a.slice(1));
+  const { gender, rest: noFlags } = extractGender(a.slice(1));
+  const { json, detailed, rest } = extractFlags(noFlags);
   const by = toInt(rest[0]);
   const bm = toInt(rest[1]);
   const bd = toInt(rest[2]);
@@ -289,16 +301,20 @@ async function main(): Promise<void> {
 
   // Chart
   if (cmd === 'chart') {
-    const extra = rest.slice(4).filter(x => !x.startsWith('--'));
+    const extra = rest.slice(4);
     if (extra.length > 0) {
       fail('无效性别或多余参数：“' + extra.join(' ') + '”（可用 male / female 或 男 / 女）', usage);
     }
     const al = astro.bySolar(bds, sc, gender, true, 'zh-CN');
+    if (json) {
+      console.log(JSON.stringify(al, null, 2));
+      return;
+    }
     console.log(fmtChart(al).join('\n'));
 
     // Star descriptions in ming palace
     const mingPalace = al.palaces.find((p: any) => p.name === '命宫');
-    if (mingPalace && rest.includes('--detailed')) {
+    if (mingPalace && detailed) {
       console.log('  【命宫主星知识】');
       for (const s of (mingPalace.majorStars ?? [])) {
         const d = SD[s.name];
@@ -317,6 +333,10 @@ async function main(): Promise<void> {
       fail('now 参数应为 <生年> <月> <日> <时> [male|female]', usage);
     }
     const h = al.horoscope();
+    if (json) {
+      console.log(JSON.stringify({ command: 'now', birth: { year: by, month: bm, day: bd, hour: bh, timeIndex: sc, gender }, horoscope: h }, null, 2));
+      return;
+    }
     const L: string[] = ['═'.repeat(52)];
     L.push('  紫微斗数流运推算');
     L.push('  本命：' + by + '/' + bm + '/' + bd + ' ' + SHORT[sc]);
@@ -339,6 +359,10 @@ async function main(): Promise<void> {
     }
     const ty = expectNum(rest, 4, '目标年', usage);
     const h = al.horoscope(ty + '-01-01');
+    if (json) {
+      console.log(JSON.stringify({ command: 'yearly', targetYear: ty, birth: { year: by, month: bm, day: bd, hour: bh, timeIndex: sc, gender }, horoscope: h }, null, 2));
+      return;
+    }
     const L: string[] = ['═'.repeat(52)];
     L.push('  流年推运');
     L.push('  本命：' + by + '/' + bm + '/' + bd + ' ' + SHORT[sc]);
@@ -358,6 +382,10 @@ async function main(): Promise<void> {
     const tm = expectNum(rest, 5, '目标月', usage);
     if (tm < 1 || tm > 12) fail('目标月无效：' + tm + '（应为 1-12）', usage);
     const h = al.horoscope(ty + '-' + p2(tm) + '-01');
+    if (json) {
+      console.log(JSON.stringify({ command: 'monthly', targetYear: ty, targetMonth: tm, birth: { year: by, month: bm, day: bd, hour: bh, timeIndex: sc, gender }, horoscope: h }, null, 2));
+      return;
+    }
     const L: string[] = ['═'.repeat(52)];
     L.push('  流月推运');
     L.push('  本命：' + by + '/' + bm + '/' + bd + ' ' + SHORT[sc]);
@@ -380,6 +408,10 @@ async function main(): Promise<void> {
     if (tm < 1 || tm > 12) fail('目标月无效：' + tm + '（应为 1-12）', usage);
     if (!isValidPlainDate(ty, tm, td)) fail('目标日期无效：' + ts, usage);
     const h = al.horoscope(ts);
+    if (json) {
+      console.log(JSON.stringify({ command: 'daily', targetDate: ts, birth: { year: by, month: bm, day: bd, hour: bh, timeIndex: sc, gender }, horoscope: h }, null, 2));
+      return;
+    }
     const L: string[] = ['═'.repeat(52)];
     L.push('  流日推运');
     L.push('  本命：' + by + '/' + bm + '/' + bd + ' ' + SHORT[sc]);
@@ -405,6 +437,10 @@ async function main(): Promise<void> {
     if (!isValidHour(th)) fail('目标时无效：' + th + '（应为 0-23）', usage);
     const tsc = h2s(th);
     const h = al.horoscope(ts, tsc);
+    if (json) {
+      console.log(JSON.stringify({ command: 'hourly', targetDate: ts, targetTimeIndex: tsc, birth: { year: by, month: bm, day: bd, hour: bh, timeIndex: sc, gender }, horoscope: h }, null, 2));
+      return;
+    }
     const L: string[] = ['═'.repeat(52)];
     L.push('  流时推运');
     L.push('  本命：' + by + '/' + bm + '/' + bd + ' ' + SHORT[sc]);
