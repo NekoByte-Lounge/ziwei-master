@@ -11,7 +11,7 @@
  *
  * 用法:
  *   ziwei chart 1995 10 14 18 male
- *   ziwei monthly 1995 10 14 18 2026 7
+ *   ziwei monthly 1995 10 14 18 female 2026 7
  *   ziwei daily 1995 10 14 18 2026 7 15
  *   ziwei now 1995 10 14 18
  */
@@ -50,6 +50,69 @@ function h2s(h: number): number {
   if (h < 21) return 10; return 11;
 }
 function p2(n: number): string { return String(n).padStart(2, '0'); }
+
+type Gender = '男' | '女';
+
+const USAGE: Record<string, string> = {
+  chart: 'ziwei chart <年> <月> <日> <时> [male|female] [--detailed]',
+  now: 'ziwei now <生年> <月> <日> <时> [male|female]',
+  yearly: 'ziwei yearly <生年> <月> <日> <时> <目标年> [male|female]',
+  monthly: 'ziwei monthly <生年> <月> <日> <时> <目标年> <目标月> [male|female]',
+  daily: 'ziwei daily <生年> <月> <日> <时> <目标年> <目标月> <目标日> [male|female]',
+  hourly: 'ziwei hourly <生年> <月> <日> <时> <目标年> <目标月> <目标日> <目标时> [male|female]',
+};
+const DEFAULT_USAGE = 'ziwei <命令> <年> <月> <日> <时> [参数...]';
+
+function genderFromToken(v: string): Gender | undefined {
+  const t = v.trim().toLowerCase();
+  if (t === 'male' || t === 'm' || t === '男') return '男';
+  if (t === 'female' || t === 'f' || t === '女') return '女';
+  return undefined;
+}
+
+function fail(msg: string, usage?: string): never {
+  console.error('错误：' + msg);
+  if (usage) console.error('用法：' + usage);
+  process.exit(1);
+}
+
+function toInt(v: string | undefined): number | undefined {
+  if (v === undefined || v.trim() === '') return undefined;
+  const n = Number(v);
+  return Number.isInteger(n) ? n : undefined;
+}
+
+function isValidHour(h: number): boolean {
+  return Number.isInteger(h) && h >= 0 && h <= 23;
+}
+
+function isValidPlainDate(y: number, m: number, d: number): boolean {
+  if (!Number.isInteger(y) || !Number.isInteger(m) || !Number.isInteger(d)) return false;
+  if (y <= 0 || m < 1 || m > 12 || d < 1) return false;
+  const dt = new Date(y, m - 1, d);
+  return dt.getFullYear() === y && dt.getMonth() === m - 1 && dt.getDate() === d;
+}
+
+function extractGender(args: string[]): { gender: Gender; rest: string[] } {
+  let gender: Gender | undefined;
+  const rest: string[] = [];
+  for (const arg of args) {
+    const g = genderFromToken(arg);
+    if (g) {
+      if (gender) fail('重复指定性别：' + arg, DEFAULT_USAGE);
+      gender = g;
+    } else {
+      rest.push(arg);
+    }
+  }
+  return { gender: gender ?? '男', rest };
+}
+
+function expectNum(rest: string[], idx: number, name: string, usage: string): number {
+  const v = toInt(rest[idx]);
+  if (v === undefined) fail('缺少或无效的' + name + '参数：' + (rest[idx] ?? ''), usage);
+  return v;
+}
 
 // ── Chart formatting ──
 function fmtChart(al: any): string[] {
@@ -148,16 +211,16 @@ function showHelp(): void {
     ' ╚══════════════════════════════════════╝',
     '',
     ' 【本命排盘】',
-    '   ziwei chart <年> <月> <日> <时> <male|female>',
+    '   ziwei chart <年> <月> <日> <时> [male|female]',
     '   例: ziwei chart 1995 10 14 18 male',
     '',
     ' 【流运推算】（基于 iztro horoscope API）',
-    '   ziwei now     <生年> <月> <日> <时>',
-    '   ziwei yearly  <生年> <月> <日> <时> <目标年>',
-    '   ziwei monthly <生年> <月> <日> <时> <目标年> <月>',
-    '   ziwei daily   <生年> <月> <日> <时> <目标年> <月> <日>',
-    '   ziwei hourly  <生年> <月> <日> <时> <目标年> <月> <日> <目标时>',
-    '   例: ziwei monthly 1995 10 14 18 2026 7',
+    '   ziwei now     <生年> <月> <日> <时> [male|female]',
+    '   ziwei yearly  <生年> <月> <日> <时> <目标年> [male|female]',
+    '   ziwei monthly <生年> <月> <日> <时> <目标年> <月> [male|female]',
+    '   ziwei daily   <生年> <月> <日> <时> <目标年> <月> <日> [male|female]',
+    '   ziwei hourly  <生年> <月> <日> <时> <目标年> <月> <日> <目标时> [male|female]',
+    '   例: ziwei monthly 1995 10 14 18 female 2026 7',
     '',
     ' 【知识查询】',
     '   ziwei star    <星名>',
@@ -204,23 +267,38 @@ async function main(): Promise<void> {
   }
 
   // Commands requiring birth info
-  const by = parseInt(a[1]), bm = parseInt(a[2]), bd = parseInt(a[3]), bh = parseInt(a[4]);
-  if (!by || !bm || !bd || isNaN(bh)) {
-    console.error('用法：命令 年 月 日 时 [参数...]');
-    process.exit(1);
+  const { gender, rest } = extractGender(a.slice(1));
+  const by = toInt(rest[0]);
+  const bm = toInt(rest[1]);
+  const bd = toInt(rest[2]);
+  const bh = toInt(rest[3]);
+
+  const usage = USAGE[cmd] ?? DEFAULT_USAGE;
+  if (by === undefined || bm === undefined || bd === undefined || bh === undefined) {
+    fail('需要提供出生年、月、日、时', usage);
   }
+  if (!isValidPlainDate(by, bm, bd)) {
+    fail('出生日期无效：' + by + '-' + p2(bm) + '-' + p2(bd), usage);
+  }
+  if (!isValidHour(bh)) {
+    fail('出生时无效：' + bh + '（应为 0-23）', usage);
+  }
+
   const sc = h2s(bh);
   const bds = by + '-' + p2(bm) + '-' + p2(bd);
 
   // Chart
   if (cmd === 'chart') {
-    const gender = (a[5] || 'male') === 'male' ? '男' : '女';
+    const extra = rest.slice(4).filter(x => !x.startsWith('--'));
+    if (extra.length > 0) {
+      fail('无效性别或多余参数：“' + extra.join(' ') + '”（可用 male / female 或 男 / 女）', usage);
+    }
     const al = astro.bySolar(bds, sc, gender, true, 'zh-CN');
     console.log(fmtChart(al).join('\n'));
 
     // Star descriptions in ming palace
     const mingPalace = al.palaces.find((p: any) => p.name === '命宫');
-    if (mingPalace && a.includes('--detailed')) {
+    if (mingPalace && rest.includes('--detailed')) {
       console.log('  【命宫主星知识】');
       for (const s of (mingPalace.majorStars ?? [])) {
         const d = SD[s.name];
@@ -232,9 +310,12 @@ async function main(): Promise<void> {
   }
 
   // Horoscope commands
-  const al = astro.bySolar(bds, sc, '男', true, 'zh-CN');
+  const al = astro.bySolar(bds, sc, gender, true, 'zh-CN');
 
   if (cmd === 'now') {
+    if (rest.length !== 4) {
+      fail('now 参数应为 <生年> <月> <日> <时> [male|female]', usage);
+    }
     const h = al.horoscope();
     const L: string[] = ['═'.repeat(52)];
     L.push('  紫微斗数流运推算');
@@ -253,8 +334,10 @@ async function main(): Promise<void> {
   }
 
   if (cmd === 'yearly') {
-    const ty = parseInt(a[5]);
-    if (!ty) { console.error('需要目标年'); process.exit(1); }
+    if (rest.length !== 5) {
+      fail('yearly 需要目标年', usage);
+    }
+    const ty = expectNum(rest, 4, '目标年', usage);
     const h = al.horoscope(ty + '-01-01');
     const L: string[] = ['═'.repeat(52)];
     L.push('  流年推运');
@@ -268,8 +351,12 @@ async function main(): Promise<void> {
   }
 
   if (cmd === 'monthly') {
-    const ty = parseInt(a[5]), tm = parseInt(a[6]);
-    if (!ty || !tm) { console.error('需要目标年月'); process.exit(1); }
+    if (rest.length !== 6) {
+      fail('monthly 需要目标年和目标月', usage);
+    }
+    const ty = expectNum(rest, 4, '目标年', usage);
+    const tm = expectNum(rest, 5, '目标月', usage);
+    if (tm < 1 || tm > 12) fail('目标月无效：' + tm + '（应为 1-12）', usage);
     const h = al.horoscope(ty + '-' + p2(tm) + '-01');
     const L: string[] = ['═'.repeat(52)];
     L.push('  流月推运');
@@ -283,9 +370,15 @@ async function main(): Promise<void> {
   }
 
   if (cmd === 'daily') {
-    const ty = parseInt(a[5]), tm = parseInt(a[6]), td = parseInt(a[7]);
-    if (!ty || !tm || !td) { console.error('需要目标年月日'); process.exit(1); }
+    if (rest.length !== 7) {
+      fail('daily 需要目标年、目标月、目标日', usage);
+    }
+    const ty = expectNum(rest, 4, '目标年', usage);
+    const tm = expectNum(rest, 5, '目标月', usage);
+    const td = expectNum(rest, 6, '目标日', usage);
     const ts = ty + '-' + p2(tm) + '-' + p2(td);
+    if (tm < 1 || tm > 12) fail('目标月无效：' + tm + '（应为 1-12）', usage);
+    if (!isValidPlainDate(ty, tm, td)) fail('目标日期无效：' + ts, usage);
     const h = al.horoscope(ts);
     const L: string[] = ['═'.repeat(52)];
     L.push('  流日推运');
@@ -299,9 +392,17 @@ async function main(): Promise<void> {
   }
 
   if (cmd === 'hourly') {
-    const ty = parseInt(a[5]), tm = parseInt(a[6]), td = parseInt(a[7]), th = parseInt(a[8]);
-    if (!ty || !tm || !td || isNaN(th)) { console.error('需要目标年月日时'); process.exit(1); }
+    if (rest.length !== 8) {
+      fail('hourly 需要目标年、目标月、目标日、目标时', usage);
+    }
+    const ty = expectNum(rest, 4, '目标年', usage);
+    const tm = expectNum(rest, 5, '目标月', usage);
+    const td = expectNum(rest, 6, '目标日', usage);
+    const th = expectNum(rest, 7, '目标时', usage);
     const ts = ty + '-' + p2(tm) + '-' + p2(td);
+    if (tm < 1 || tm > 12) fail('目标月无效：' + tm + '（应为 1-12）', usage);
+    if (!isValidPlainDate(ty, tm, td)) fail('目标日期无效：' + ts, usage);
+    if (!isValidHour(th)) fail('目标时无效：' + th + '（应为 0-23）', usage);
     const tsc = h2s(th);
     const h = al.horoscope(ts, tsc);
     const L: string[] = ['═'.repeat(52)];

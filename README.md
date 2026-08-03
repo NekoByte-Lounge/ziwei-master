@@ -36,8 +36,8 @@ npm install
 # 本命排盘
 ziwei chart 1990 1 1 12 male
 
-# 流月推算 (2026年7月)
-ziwei monthly 1990 1 1 12 2026 7
+# 流月推算 (2026年7月，可手动指定性别 male / female)
+ziwei monthly 1990 1 1 12 female 2026 7
 
 # 流日推算 (2026年7月15日)
 ziwei daily 1990 1 1 12 2026 7 15
@@ -53,7 +53,7 @@ ziwei star 紫微
 
 ```bash
 python py/ziwei.py chart 1990 1 1 12 male
-python py/ziwei.py monthly 1990 1 1 12 2026 7
+python py/ziwei.py monthly 1990 1 1 12 female 2026 7
 ```
 
 说明：新安装脚本会通过 npm link 将本仓库的命令注册到全局 PATH。运行 ziwei 时，程序会优先尝试使用系统中已安装的 tsx；若未发现，会回退使用 npx tsx 作为一次性执行的后备方式。
@@ -62,19 +62,22 @@ python py/ziwei.py monthly 1990 1 1 12 2026 7
 
 ### chart 命令
 ```
-chart <年> <月> <日> <时> <male|female>
+chart <年> <月> <日> <时> [male|female]
 ```
 - 时：0-23（24小时制）
+- 性别：可填 `male` / `female`（或 `男` / `女`），缺省按男性
 - 输出：12宫星曜、亮度（庙旺/平/落陷）、四化、大限
 
 ### 流运命令
 ```
-monthly <生年> <月> <日> <时> <目标年> <目标月>
-daily   <生年> <月> <日> <时> <目标年> <目标月> <目标日>
-yearly  <生年> <月> <日> <时> <目标年>
-now     <生年> <月> <日> <时>
+monthly <生年> <月> <日> <时> <目标年> <目标月> [male|female]
+daily   <生年> <月> <日> <时> <目标年> <目标月> <目标日> [male|female]
+yearly  <生年> <月> <日> <时> <目标年> [male|female]
+now     <生年> <月> <日> <时> [male|female]
 ```
 - 流运输出：四化（禄权科忌）、流限十二宫对照本命、流耀（动态星曜）
+- 性别：可填 `male` / `female`（或 `男` / `女`），缺省按男性。性别影响大限/小限计算，推荐显式传入
+- 参数校验：出生/流运的非法日期、非法时辰（非 0-23）会给出明确报错和用法提示
 
 ## 输出示例
 
