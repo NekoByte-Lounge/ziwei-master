@@ -21,16 +21,16 @@
     "ziwei": "bin/ziwei.cjs"
   },
   "scripts": {
-    "chart": "npx tsx cli/ziwei.ts chart",
-    "monthly": "npx tsx cli/ziwei.ts monthly",
-    "daily": "npx tsx cli/ziwei.ts daily",
-    "yearly": "npx tsx cli/ziwei.ts yearly",
-    "now": "npx tsx cli/ziwei.ts now",
-    "star": "npx tsx cli/ziwei.ts star",
-    "palace": "npx tsx cli/ziwei.ts palace",
-    "help": "npx tsx cli/ziwei.ts help",
+    "chart": "tsx cli/ziwei.ts chart",
+    "monthly": "tsx cli/ziwei.ts monthly",
+    "daily": "tsx cli/ziwei.ts daily",
+    "yearly": "tsx cli/ziwei.ts yearly",
+    "now": "tsx cli/ziwei.ts now",
+    "star": "tsx cli/ziwei.ts star",
+    "palace": "tsx cli/ziwei.ts palace",
+    "help": "tsx cli/ziwei.ts help",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test src/args.test.ts"
+    "test": "tsx --test src/args.test.ts src/cli.test.ts"
   },
   "dependencies": {
     "iztro": "^2.5.8",

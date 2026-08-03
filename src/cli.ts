@@ -1,11 +1,14 @@
 import { astro } from 'iztro';
-import { PNAMES, SHORT, BRANCHES, SD } from './knowledge.js';
+import type { IFunctionalAstrolabe } from 'iztro/lib/astro/FunctionalAstrolabe';
+import type { IFunctionalPalace } from 'iztro/lib/astro/FunctionalPalace';
+import { MUTAGEN_INFO, PALACE_INFO, PNAMES, SHORT, BRANCHES, SD } from './knowledge.js';
 import {
   DEFAULT_USAGE, USAGE, expectNum, extractFlags, extractGender, fail,
   h2s, isValidHour, isValidPlainDate, p2, toInt,
 } from './args.js';
 import { fmtChart } from './formatters/chart.js';
 import { fmtScope } from './formatters/horoscope.js';
+import { matchedPatterns } from './patterns.js';
 
 // ── Help ──
 export function showHelp(): void {
@@ -101,18 +104,66 @@ export async function main(argv: string[]): Promise<void> {
     if (extra.length > 0) {
       fail('无效性别或多余参数：“' + extra.join(' ') + '”（可用 male / female 或 男 / 女）', usage);
     }
-    const al = astro.bySolar(bds, sc, gender, true, 'zh-CN');
+    const al: IFunctionalAstrolabe = astro.bySolar(bds, sc, gender, true, 'zh-CN');
     if (json) {
       console.log(JSON.stringify(al, null, 2));
       return;
     }
     console.log(fmtChart(al).join('\n'));
 
-    // Star descriptions in ming palace
-    const mingPalace = al.palaces.find((p: any) => p.name === '命宫');
+    // 详细分析：三方四正 / 格局 / 知识库
+    const mingPalace = al.palaces.find((p: IFunctionalPalace) => p.name === '命宫');
     if (mingPalace && detailed) {
+      console.log('═'.repeat(52));
+      console.log('  【详细分析】');
+      console.log('─'.repeat(52));
+
+      // 命宫三方四正
+      console.log('  【命宫三方四正】');
+      const sp = al.surroundedPalaces(mingPalace.index);
+      const four: Array<[string, IFunctionalPalace]> = [
+        ['本宫', sp.target],
+        ['财帛', sp.wealth],
+        ['官禄', sp.career],
+        ['对宫', sp.opposite],
+      ];
+      for (const [label, p] of four) {
+        const majors = p.majorStars.map((s) => s.name).join('、') || '无';
+        console.log('    ' + label.padEnd(4) + p.name + ' [' + p.earthlyBranch + '] 主星：' + majors);
+      }
+      console.log('─'.repeat(52));
+
+      // 格局识别
+      console.log('  【格局】');
+      const hits = matchedPatterns(al);
+      if (hits.length > 0) {
+        for (const g of hits) console.log('    ' + g.name + '：' + g.desc);
+      } else {
+        console.log('    未命中内置格局');
+      }
+      console.log('─'.repeat(52));
+
+      // 命宫百科
+      console.log('  【命宫】');
+      console.log('    ' + (PALACE_INFO[mingPalace.name] ?? ''));
+
+      // 四化说明
+      const sm: Record<string, string> = {};
+      for (const p of al.palaces) {
+        for (const s of [...p.majorStars, ...p.minorStars]) {
+          if (s.mutagen) sm[s.name] = s.mutagen;
+        }
+      }
+      if (Object.keys(sm).length > 0) {
+        console.log('  【四化说明】');
+        for (const [star, hua] of Object.entries(sm)) {
+          console.log('    ' + star + '化' + hua + '：' + (MUTAGEN_INFO[hua] ?? ''));
+        }
+      }
+
+      // 命宫主星知识
       console.log('  【命宫主星知识】');
-      for (const s of (mingPalace.majorStars ?? [])) {
+      for (const s of mingPalace.majorStars) {
         const d = SD[s.name];
         if (d) console.log('  ' + s.name + '：' + d.kw + '（' + d.nat + '，五行' + d.el + '）');
       }
@@ -122,7 +173,7 @@ export async function main(argv: string[]): Promise<void> {
   }
 
   // Horoscope commands
-  const al = astro.bySolar(bds, sc, gender, true, 'zh-CN');
+  const al: IFunctionalAstrolabe = astro.bySolar(bds, sc, gender, true, 'zh-CN');
 
   if (cmd === 'now') {
     if (rest.length !== 4) {

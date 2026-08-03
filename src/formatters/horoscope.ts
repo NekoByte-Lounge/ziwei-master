@@ -1,7 +1,9 @@
+import type { HoroscopeItem } from 'iztro/lib/data/types/astro';
+import type { IFunctionalStar } from 'iztro/lib/star/FunctionalStar';
 import { PNAMES } from '../knowledge.js';
 
 // 将 iztro Horoscope 的某个流限对象格式化为可读文本
-export function fmtScope(item: any, label: string): string[] {
+export function fmtScope(item: HoroscopeItem, label: string): string[] {
   const L: string[] = [];
   const idx = item.index ?? -1;
   const pn = idx >= 0 && idx < 12 ? PNAMES[idx] : '?';
@@ -18,7 +20,7 @@ export function fmtScope(item: any, label: string): string[] {
     }
   }
   if (item.stars?.length) {
-    const flat = item.stars.flat().filter(Boolean).map((s: any) => s.name).filter(Boolean);
+    const flat = item.stars.flat().filter((s): s is IFunctionalStar => Boolean(s)).map((s: IFunctionalStar) => s.name);
     if (flat.length) L.push('  流耀：' + flat.join('、'));
   }
   return L;
