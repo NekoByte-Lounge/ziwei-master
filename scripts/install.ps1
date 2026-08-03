@@ -1,18 +1,39 @@
-Param()
 <#
 PowerShell install script for Windows.
-Run in an elevated or regular PowerShell as: .\scripts\install.ps1
+用法: powershell -ExecutionPolicy Bypass -File .\scripts\install.ps1
+作用: 安装依赖(npm ci/install) 后通过 npm link 注册全局 ziwei 命令
 #>
+$ErrorActionPreference = 'Stop'
+
 $repoRoot = Split-Path -Parent $PSScriptRoot
 
-Write-Host "Linking package using npm link..."
-if (Get-Command npm -ErrorAction SilentlyContinue) {
-    Push-Location $repoRoot
-    npm link
-    Pop-Location
-    Write-Host "Done. You can now run 'ziwei' from any terminal."
-} else {
-    Write-Error "npm not found. Please install Node.js and npm first."
+if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
+    Write-Error "未找到 Node.js，请先安装 Node.js 与 npm（https://nodejs.org）。"
     exit 1
 }
 
+if (-not (Get-Command npm -ErrorAction SilentlyContinue)) {
+    Write-Error "未找到 npm，请先安装 Node.js 与 npm（https://nodejs.org）。"
+    exit 1
+}
+
+Write-Host "Installing ziwei command to your system..."
+Push-Location $repoRoot
+
+if (Test-Path package-lock.json) {
+    Write-Host "npm ci ..."
+    npm ci
+} else {
+    Write-Host "npm install ..."
+    npm install
+}
+
+Write-Host "Linking package (npm link) ..."
+npm link
+
+Pop-Location
+
+Write-Host ""
+Write-Host "Done. You can now run from any terminal:"
+Write-Host "  ziwei chart 1990 1 1 12 male"
+Write-Host "  ziwei monthly 1990 1 1 12 2026 7"
